@@ -1,0 +1,23 @@
+{
+  "app": {
+    "name": "提示词管理系统",
+    "version": "1.0.0",
+    "description": "管理AI提示词模板"
+  },
+  "server": {
+    "port": 3001,
+    "frontendPort": 3000,
+    "host": "0.0.0.0"
+  },
+  "features": {
+    "enableRegistration": false,
+    "defaultUserRole": "user",
+    "maxTemplatesPerUser": 100,
+    "maxTagsPerUser": 50
+  },
+  "memos": {
+    "enabled": false,
+    "url": "",
+    "apiKey": ""
+  }
+}

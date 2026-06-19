@@ -1,0 +1,123 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// 用户表
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String   // bcrypt加密
+  email     String?
+  role      String   @default("user") // user 或 admin
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 关系
+  templates Template[]
+  tags       Tag[]
+  versions  TemplateVersion[]
+}
+
+// 提示词模板表
+model Template {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  content     String   // 模板内容，支持占位符
+  category    String?  // 分类
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // 关系
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  keywords    TemplateKeyword[]
+  tags        TemplateTag[]
+  versions    TemplateVersion[]
+
+  @@index([userId])
+  @@index([category])
+}
+
+// 模板关键字表（多关键字支持）
+model TemplateKeyword {
+  id         String   @id @default(cuid())
+  templateId String
+  keyword    String
+  createdAt  DateTime @default(now())
+
+  // 关系
+  template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, keyword])
+  @@index([keyword])
+  @@index([templateId])
+}
+
+// 标签表
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  color     String   @default("#3B82F6") // 标签颜色
+  userId    String
+  createdAt DateTime @default(now())
+
+  // 关系
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  templates TemplateTag[]
+
+  @@index([userId])
+}
+
+// 模板标签关联表（多对多）
+model TemplateTag {
+  templateId String
+  tagId      String
+  createdAt  DateTime @default(now())
+
+  // 关系
+  template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([templateId, tagId])
+}
+
+// 模板版本历史表
+model TemplateVersion {
+  id         String   @id @default(cuid())
+  templateId String
+  version    Int
+  content    String
+  userId     String
+  comment    String?  // 版本备注
+  createdAt  DateTime @default(now())
+
+  // 关系
+  template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@index([templateId])
+  @@index([version])
+}
+
+// 模板使用记录表
+model TemplateUsage {
+  id           String   @id @default(cuid())
+  templateId   String
+  templateTitle String
+  replacements String   // JSON字符串，存储关键字映射
+  result       String   // 替换后的完整内容
+  userId       String
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([templateId])
+}

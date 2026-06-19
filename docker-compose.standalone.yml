@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: weixintishici-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"   # 前端
+      - "3001:3001"   # 后端 API
+    volumes:
+      # 数据持久化
+      - ./data:/app/data
+      # 日志持久化
+      - ./logs:/app/logs
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - FRONTEND_PORT=3000
+      - DATABASE_URL=file:./data/prompts.db
+      - JWT_SECRET=${JWT_SECRET:-weixintishici-secret-key-2024}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
+      - MEMOS_API_URL=${MEMOS_API_URL:-}
+      - MEMOS_API_KEY=${MEMOS_API_KEY:-}
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  data:
+  logs:
