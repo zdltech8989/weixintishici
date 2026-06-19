@@ -13,7 +13,108 @@
 
 ## 快速开始
 
-### 1. 一键部署
+### 方式一：使用 GitHub Container Registry 镜像（推荐）
+
+本项目使用 GitHub Actions 自动构建 Docker 镜像并发布到 GitHub Container Registry (ghcr.io)。这是最快速的部署方式，无需本地构建。
+
+#### 镜像地址
+
+```
+ghcr.io/zdltech8989/weixintishici:latest
+```
+
+#### 版本标签
+
+- `latest` - 最新稳定版本
+- `v1.0.0` - 具体版本号
+- `v1.0` - 次版本号
+- `v1` - 主版本号
+
+#### 拉取镜像
+
+```bash
+# 拉取最新版本
+docker pull ghcr.io/zdltech8989/weixintishici:latest
+
+# 拉取特定版本
+docker pull ghcr.io/zdltech8989/weixintishici:v1.0.0
+```
+
+#### 使用 Docker Compose 部署
+
+创建 `docker-compose.yml` 文件：
+
+```yaml
+version: '3.8'
+
+services:
+  app:
+    image: ghcr.io/zdltech8989/weixintishici:latest
+    container_name: weixintishici-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"   # 前端
+      - "3001:3001"   # 后端 API
+    volumes:
+      # 数据持久化
+      - ./data:/app/data
+      # 日志持久化
+      - ./logs:/app/logs
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - FRONTEND_PORT=3000
+      - DATABASE_URL=file:./data/prompts.db
+      - JWT_SECRET=${JWT_SECRET:-weixintishici-secret-key-2024}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+```
+
+启动服务：
+
+```bash
+# 启动服务
+docker compose up -d
+
+# 查看日志
+docker compose logs -f
+
+# 停止服务
+docker compose down
+```
+
+#### 使用 Docker 命令直接运行
+
+```bash
+docker run -d \
+  --name weixintishici-app \
+  -p 3000:3000 \
+  -p 3001:3001 \
+  -v $(pwd)/data:/app/data \
+  -v $(pwd)/logs:/app/logs \
+  -e JWT_SECRET=your-secret-key \
+  ghcr.io/zdltech8989/weixintishici:latest
+```
+
+#### 更新镜像
+
+```bash
+# 拉取最新镜像
+docker pull ghcr.io/zdltech8989/weixintishici:latest
+
+# 重启服务
+docker compose up -d
+```
+
+### 方式二：本地构建部署
+
+#### 1. 一键部署
 
 ```bash
 chmod +x deploy-standalone.sh
@@ -264,3 +365,54 @@ rm -rf data logs config
 2. 端口是否被占用
 3. 磁盘空间是否充足
 4. 日志文件中的错误信息
+
+## GitHub Actions 自动构建
+
+本项目使用 GitHub Actions 自动构建 Docker 镜像。
+
+### 构建触发条件
+
+Docker 镜像在以下情况下自动构建：
+
+- **创建 Release** - 在 GitHub 上创建 Release 时自动构建并推送镜像
+- **手动触发** - 在 GitHub Actions 界面手动运行工作流
+
+### 查看构建状态
+
+```bash
+# 查看工作流列表
+gh workflow list
+
+# 查看最新构建
+gh run list --workflow=docker-build.yml
+
+# 查看构建详情
+gh run view
+
+# 在浏览器中查看
+gh run view --web
+```
+
+### 创建 Release 触发构建
+
+```bash
+# 使用 GitHub CLI 创建 Release
+gh release create v1.0.0 \
+  --title "v1.0.0 - Initial Release" \
+  --notes "First stable release"
+
+# 或在 GitHub 界面创建
+# 1. 访问 https://github.com/zdltech8989/weixintishici/releases
+# 2. 点击 "Create a new release"
+# 3. 填写版本号和发布说明
+# 4. 点击 "Publish release"
+```
+
+### 镜像构建流程
+
+1. GitHub 接收到 Release 创建事件
+2. GitHub Actions 触发构建工作流
+3. 使用 Dockerfile 构建镜像
+4. 推送到 GitHub Container Registry
+5. 生成多个版本标签（latest、v1.0.0、v1.0、v1）
+6. 构建完成，镜像可立即使用
