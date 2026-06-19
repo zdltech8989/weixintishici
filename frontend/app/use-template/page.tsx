@@ -57,7 +57,8 @@ export default function UseTemplatePage() {
       return
     }
 
-    fetch('/api/templates', {
+    // 获取所有模板（不分页）
+    fetch('/api/templates?pageSize=1000', {
       headers: { 'Authorization': `Bearer ${token}` }
     })
       .then(res => res.json())
@@ -186,8 +187,10 @@ export default function UseTemplatePage() {
   }
 
   // 从历史记录加载
-  const loadFromHistory = (usage: TemplateUsage) => {
-    const template = templates.find(t => t.id === usage.templateId)
+  const loadFromHistory = async (usage: TemplateUsage) => {
+    // 首先在本地模板列表中查找
+    let template = templates.find(t => t.id === usage.templateId)
+
     if (template) {
       setSelectedTemplate(template)
       setKeywords(usage.replacements)
@@ -195,8 +198,40 @@ export default function UseTemplatePage() {
         title: "加载成功",
         description: `已加载模板 "${template.title}"`,
       })
-    } else {
-      // 如果找不到模板（例如手动添加的记录或模板已删除）
+      return
+    }
+
+    // 如果本地找不到，尝试从 API 获取单个模板
+    const token = localStorage.getItem('token')
+    if (!token) {
+      toast({
+        title: "加载失败",
+        description: "未登录，无法加载模板",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/templates/${usage.templateId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      const data = await response.json()
+
+      if (data.success && data.data) {
+        // 将获取到的模板添加到本地列表
+        setTemplates(prev => [...prev, data.data])
+        setSelectedTemplate(data.data)
+        setKeywords(usage.replacements)
+        toast({
+          title: "加载成功",
+          description: `已加载模板 "${data.data.title}"`,
+        })
+      } else {
+        throw new Error('Template not found')
+      }
+    } catch (error) {
+      // 如果是手动添加的记录或模板已删除
       if (usage.templateId === 'manual') {
         toast({
           title: "手动添加的记录",
@@ -206,7 +241,7 @@ export default function UseTemplatePage() {
       } else {
         toast({
           title: "模板不存在",
-          description: "该记录对应的模板已被删除",
+          description: "该记录对应的模板已被删除或无权访问",
           variant: "destructive",
         })
       }
