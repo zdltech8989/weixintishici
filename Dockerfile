@@ -18,6 +18,7 @@ COPY backend/src ./backend/src/
 # ============ 前端构建 ============
 COPY frontend/package*.json ./frontend/
 COPY frontend/next.config.js ./frontend/
+COPY frontend/tsconfig.json ./frontend/
 COPY frontend/tailwind.config.ts ./frontend/
 COPY frontend/postcss.config.js ./frontend/
 
