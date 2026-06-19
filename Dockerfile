@@ -29,7 +29,8 @@ COPY frontend/public ./frontend/public/
 COPY frontend/components ./frontend/components/
 COPY frontend/app ./frontend/app/
 COPY frontend/lib ./frontend/lib/
-COPY frontend/styles ./frontend/styles 2>/dev/null || mkdir -p ./frontend/styles
+# Copy styles directory if it exists (optional)
+RUN mkdir -p ./frontend/styles
 
 # 构建前端
 RUN cd frontend && npm run build
