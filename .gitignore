@@ -61,6 +61,11 @@ lerna-debug.log*
 *~
 
 # ============
+# Claude Code
+# ============
+.claude/
+
+# ============
 # Testing
 # ============
 coverage/
