@@ -19,18 +19,15 @@ COPY backend/src ./backend/src/
 COPY frontend/package*.json ./frontend/
 COPY frontend/next.config.js ./frontend/
 COPY frontend/tailwind.config.ts ./frontend/
-COPY frontend/postcss.config.js ./frontend/ 2>/dev/null || true
+COPY frontend/postcss.config.js ./frontend/
 
 RUN cd frontend && npm ci
 
 # 复制前端源代码
-COPY frontend/src ./frontend/src/
-COPY frontend/public ./frontend/public/
-COPY frontend/components ./frontend/components/
 COPY frontend/app ./frontend/app/
+COPY frontend/components ./frontend/components/
 COPY frontend/lib ./frontend/lib/
-# Copy styles directory if it exists (optional)
-RUN mkdir -p ./frontend/styles
+COPY frontend/public ./frontend/public/
 
 # 构建前端
 RUN cd frontend && npm run build
