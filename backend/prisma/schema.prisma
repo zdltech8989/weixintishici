@@ -65,7 +65,7 @@ model TemplateKeyword {
 // 标签表
 model Tag {
   id        String   @id @default(cuid())
-  name      String   @unique
+  name      String
   color     String   @default("#3B82F6") // 标签颜色
   userId    String
   createdAt DateTime @default(now())
@@ -74,6 +74,7 @@ model Tag {
   user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   templates TemplateTag[]
 
+  @@unique([name, userId]) // 同一用户下标签名唯一
   @@index([userId])
 }
 
