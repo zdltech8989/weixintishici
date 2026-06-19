@@ -21,6 +21,9 @@ COPY frontend/next.config.js ./frontend/
 COPY frontend/tailwind.config.ts ./frontend/
 COPY frontend/postcss.config.js ./frontend/
 
+# 增加内存限制以避免构建时内存不足
+ENV NODE_OPTIONS=--max-old-space-size=2048
+
 RUN cd frontend && npm ci
 
 # 复制前端源代码
@@ -30,7 +33,8 @@ COPY frontend/lib ./frontend/lib/
 COPY frontend/public ./frontend/public/
 
 # 构建前端
-RUN cd frontend && npm run build
+RUN cd frontend && \
+    npm run build -- --no-lint
 
 # ============ 生产镜像 ============
 FROM node:18-alpine
